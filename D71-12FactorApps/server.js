@@ -9,6 +9,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Routes
+const userRoutes = require('./routes/users');
+app.use('/api/users', userRoutes);
+
 // Base route
 app.get('/', (req, res) => {
     res.send('FactorApp API is running');
