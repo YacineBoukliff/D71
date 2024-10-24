@@ -11,14 +11,15 @@ const userSchema = new mongoose.Schema({
         required: true,
         unique: true
     },
-    password: {
-        type: String,
-        required: true
-    },
     createdAt: {
         type: Date,
         default: Date.now
+    },
+    lastLogin: {
+        type: Date
     }
+}, {
+    timestamps: true  // Ajoute automatiquement updatedAt
 });
 
 module.exports = mongoose.model('User', userSchema);
