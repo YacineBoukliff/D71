@@ -4,14 +4,14 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-   "start": "node dist/server.bundle.js",
+    "start": "node dist/server.bundle.js",
     "dev": "nodemon server.js",
     "build": "webpack --config webpack.config.js",
     "prod": "NODE_ENV=production npm run build && npm start",
     "release": "node scripts/release.js",
     "start:prod": "node scripts/start.js",
-    "start:cluster": "node cluster.js"
-    
+    "start:cluster": "node cluster.js",
+    "test:load": "node tests/load-test.js"
   },
   "keywords": [],
   "author": "",
@@ -31,6 +31,7 @@
   "devDependencies": {
     "@babel/core": "^7.25.9",
     "@babel/preset-env": "^7.25.9",
+    "axios": "^1.7.7",
     "babel-loader": "^9.2.1",
     "webpack": "^5.95.0",
     "webpack-cli": "^5.1.4"

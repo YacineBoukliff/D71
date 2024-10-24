@@ -1,21 +1,24 @@
 const express = require('express');
 const router = express.Router();
+const cacheService = require('../services/cache');
 const User = require('../models/User');
 
-// Get all users
+// Liste des utilisateurs avec cache
 router.get('/', async (req, res) => {
     try {
-        // Check cache first
-        const cachedUsers = await getCache('users');
+        // Vérifier le cache d'abord
+        const cacheKey = 'users:all';
+        const cachedUsers = await cacheService.get(cacheKey);
+        
         if (cachedUsers) {
+            console.log('Données récupérées du cache');
             return res.json(cachedUsers);
         }
 
-        // If not in cache, get from DB
+        // Si pas en cache, récupérer de la base de données
         const users = await User.find().select('-password');
-        
-        // Store in cache
-        await setCache('users', users, 300); // Cache for 5 minutes
+        // Stocker dans le cache pour 5 minutes
+        await cacheService.set(cacheKey, users, 300);
         
         res.json(users);
     } catch (err) {
@@ -23,19 +26,40 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Create new user
+// Créer un utilisateur
 router.post('/', async (req, res) => {
-    const user = new User({
-        username: req.body.username,
-        email: req.body.email,
-        password: req.body.password // Note: Dans un vrai projet, il faudrait hasher le mot de passe
-    });
-
     try {
-        const newUser = await user.save();
-        res.status(201).json(newUser);
+        const user = new User(req.body);
+        const savedUser = await user.save();
+        
+        // Invalider le cache des utilisateurs
+        await cacheService.delete('users:all');
+        
+        res.status(201).json(savedUser);
     } catch (err) {
         res.status(400).json({ message: err.message });
+    }
+});
+
+// Obtenir un utilisateur spécifique
+router.get('/:id', async (req, res) => {
+    try {
+        const cacheKey = `user:${req.params.id}`;
+        const cachedUser = await cacheService.get(cacheKey);
+        
+        if (cachedUser) {
+            return res.json(cachedUser);
+        }
+
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({ message: 'Utilisateur non trouvé' });
+        }
+
+        await cacheService.set(cacheKey, user, 300);
+        res.json(user);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
     }
 });
 
