@@ -8,7 +8,10 @@
     "dev": "nodemon server.js",
     "build": "webpack --config webpack.config.js",
     "prod": "NODE_ENV=production npm run build && npm start",
-    "release": "node scripts/release.js"
+    "release": "node scripts/release.js",
+    "start:prod": "node scripts/start.js",
+    "start:cluster": "node cluster.js"
+    
   },
   "keywords": [],
   "author": "",

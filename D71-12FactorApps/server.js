@@ -1,29 +1,51 @@
 const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
+const compression = require('compression');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const connectDB = require('./config/database');
 require('dotenv').config({
     path: `.env.${process.env.NODE_ENV || 'development'}`
 });
 
-const connectDB = require('./config/database');
 const app = express();
 
-// Middleware
-app.use(cors());
+// Configuration de production
+if (process.env.NODE_ENV === 'production') {
+    // Compression pour optimiser les performances
+    app.use(compression());
+    
+    // Sécurité avec helmet
+    app.use(helmet());
+    
+    // Rate limiting
+    const limiter = rateLimit({
+        windowMs: 15 * 60 * 1000, // 15 minutes
+        max: 100 // limite chaque IP à 100 requêtes par fenêtre
+    });
+    app.use(limiter);
+}
+
+// Middleware standard
 app.use(express.json());
 
 // Routes
 const userRoutes = require('./routes/users');
-const stripeRoutes = require('./routes/stripe');
-
 app.use('/api/users', userRoutes);
-app.use('/api/stripe', stripeRoutes);
 
-// Connect to database
-connectDB();
+// Gestion des erreurs
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({
+        message: process.env.NODE_ENV === 'production' 
+            ? 'Internal Server Error' 
+            : err.message
+    });
+});
 
-// Start server
+// Démarrage
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+connectDB().then(() => {
+    app.listen(PORT, () => {
+        console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+    });
 });
