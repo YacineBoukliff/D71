@@ -5,7 +5,18 @@ const User = require('../models/User');
 // Get all users
 router.get('/', async (req, res) => {
     try {
+        // Check cache first
+        const cachedUsers = await getCache('users');
+        if (cachedUsers) {
+            return res.json(cachedUsers);
+        }
+
+        // If not in cache, get from DB
         const users = await User.find().select('-password');
+        
+        // Store in cache
+        await setCache('users', users, 300); // Cache for 5 minutes
+        
         res.json(users);
     } catch (err) {
         res.status(500).json({ message: err.message });
